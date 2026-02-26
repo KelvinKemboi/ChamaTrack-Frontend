@@ -2,6 +2,33 @@ import { useState, useCallback, useEffect } from "react";
 import { Alert } from "react-native";
 import { API_URL } from "../constants/api.js";
 
+const buildGraphDataFromTransactions = (items = []) => {
+  const grouped = {};
+
+  items.forEach((tx) => {
+    const rawDate = tx?.created_at;
+    const date = rawDate ? new Date(rawDate) : null;
+    if (!date || Number.isNaN(date.getTime())) return;
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const key = `${year}-${month}`;
+    const amount = Number(tx?.amount || 0);
+
+    if (!grouped[key]) grouped[key] = { income: 0, expenses: 0 };
+
+    if (amount > 0) grouped[key].income += amount;
+    if (amount < 0) grouped[key].expenses += Math.abs(amount);
+  });
+
+  const labels = Object.keys(grouped).sort();
+  return {
+    labels,
+    income: labels.map((label) => grouped[label].income),
+    expenses: labels.map((label) => grouped[label].expenses),
+  };
+};
+
 export const useTransactions = (userId) => {
   const [transactions, setTransactions] = useState([]);
   const [summary, setSummary] = useState({
@@ -17,7 +44,7 @@ export const useTransactions = (userId) => {
   const [isLoading, setIsLoading] = useState(false);
 
   // fetches helper with safe fail
-  const safeFetchJson = useCallback(async (url, actionName = "Fetch") => {
+  const safeFetchJson = useCallback(async (url, actionName = "Fetch", { showAlert = true } = {}) => {
     if (!userId) return null;
 
     try {
@@ -26,7 +53,9 @@ export const useTransactions = (userId) => {
       if (!response.ok) {
         const text = await response.text();
         console.error(`${actionName} failed:`, text);
-        Alert.alert("Error", `${actionName} failed. Returning empty data.`);
+        if (showAlert) {
+          Alert.alert("Error", `${actionName} failed. Returning empty data.`);
+        }
         return null; // allow app to continue
       }
 
@@ -34,7 +63,9 @@ export const useTransactions = (userId) => {
       return data;
     } catch (error) {
       console.error(`${actionName} exception:`, error);
-      Alert.alert("Error", `${actionName} failed. Returning empty data.`);
+      if (showAlert) {
+        Alert.alert("Error", `${actionName} failed. Returning empty data.`);
+      }
       return null; // allow app to continue
     }
   }, [userId]);
@@ -42,7 +73,9 @@ export const useTransactions = (userId) => {
   // transactions
   const fetchTransactions = useCallback(async () => {
     const data = await safeFetchJson(`${API_URL}/transactions/${userId}`, "Transactions fetch");
-    setTransactions(data || []); // TEMP FIX: default empty array
+    const result = data || [];
+    setTransactions(result); // TEMP FIX: default empty array
+    return result;
   }, [userId, safeFetchJson]);
 
   // summary
@@ -52,9 +85,19 @@ export const useTransactions = (userId) => {
   }, [userId, safeFetchJson]);
 
   // graph
-  const fetchGraphData = useCallback(async () => {
-    const data = await safeFetchJson(`${API_URL}/transactions/graph/${userId}`, "Graph data fetch");
-    setGraphData(data || { labels: [], income: [], expenses: [] });
+  const fetchGraphData = useCallback(async (fallbackTransactions = []) => {
+    const data = await safeFetchJson(
+      `${API_URL}/transactions/graph/${userId}`,
+      "Graph data fetch",
+      { showAlert: false }
+    );
+
+    if (data) {
+      setGraphData(data);
+      return;
+    }
+
+    setGraphData(buildGraphDataFromTransactions(fallbackTransactions));
   }, [userId, safeFetchJson]);
 
   // Loads data
@@ -63,7 +106,8 @@ export const useTransactions = (userId) => {
 
     setIsLoading(true);
     try {
-      await Promise.all([fetchTransactions(), fetchSummary(), fetchGraphData()]);
+      const [txns] = await Promise.all([fetchTransactions(), fetchSummary()]);
+      await fetchGraphData(txns || []);
     } catch (error) {
       console.error("Error loading data:", error);
       // renders UI
