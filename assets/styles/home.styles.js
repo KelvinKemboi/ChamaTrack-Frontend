@@ -93,6 +93,20 @@ export const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
   },
+  chartCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: COLORS.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
   balanceTitle: {
     fontSize: 16,
     color: COLORS.textLight,
@@ -246,6 +260,10 @@ export const styles = StyleSheet.create({
     color: COLORS.white,
     fontWeight: "600",
     marginLeft: 6,
+  },
+  chartEmptyText: {
+    color: COLORS.textLight,
+    fontSize: 14,
   },
   transactionsHeaderContainer: {
     flexDirection: "row",

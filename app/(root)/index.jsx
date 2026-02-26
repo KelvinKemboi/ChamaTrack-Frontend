@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import {BalanceCard} from "../../components/BalanceCard.jsx";
 import {TransactionItem} from "../../components/TransactionItem.jsx"
 import NoTransactionsFound from "../../components/NoTransactionsFound.jsx"
+import TransactionsChart from "../../components/TransactionsChart.jsx";
 
 
 export default function Page() {
@@ -18,7 +19,7 @@ export default function Page() {
   const router = useRouter();
   const [refreshing,setRefreshing] = useState(false);
 
-  const {transactions, summary, isLoading, loadData, deleteTransaction} = useTransactions (user.id);
+  const {transactions, summary, graphData, isLoading, loadData, deleteTransaction} = useTransactions (user.id);
 
   const onRefresh = async() =>{
     setRefreshing(true);
@@ -66,6 +67,7 @@ if(isLoading && !refreshing) return <PageLoader />
     </View>
     </View>
     <BalanceCard summary={summary}/>
+    <TransactionsChart graphData={graphData} />
     </View>
     <FlatList 
     style={styles.transactionsList}

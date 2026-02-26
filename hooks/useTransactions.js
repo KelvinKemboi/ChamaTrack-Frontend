@@ -9,6 +9,11 @@ export const useTransactions = (userId) => {
     income: 0,
     expenses: 0,
   });
+  const [graphData, setGraphData] = useState({
+    labels: [],
+    income: [],
+    expenses: [],
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   // fetches helper with safe fail
@@ -46,22 +51,29 @@ export const useTransactions = (userId) => {
     setSummary(data || { balance: 0, income: 0, expenses: 0 }); // TEMP FIX: default zero
   }, [userId, safeFetchJson]);
 
+  // graph
+  const fetchGraphData = useCallback(async () => {
+    const data = await safeFetchJson(`${API_URL}/transactions/graph/${userId}`, "Graph data fetch");
+    setGraphData(data || { labels: [], income: [], expenses: [] });
+  }, [userId, safeFetchJson]);
+
   // Loads data
   const loadData = useCallback(async () => {
     if (!userId) return;
 
     setIsLoading(true);
     try {
-      await Promise.all([fetchTransactions(), fetchSummary()]);
+      await Promise.all([fetchTransactions(), fetchSummary(), fetchGraphData()]);
     } catch (error) {
       console.error("Error loading data:", error);
       // renders UI
       setTransactions([]);
       setSummary({ balance: 0, income: 0, expenses: 0 });
+      setGraphData({ labels: [], income: [], expenses: [] });
     } finally {
       setIsLoading(false);
     }
-  }, [fetchTransactions, fetchSummary, userId]);
+  }, [fetchTransactions, fetchSummary, fetchGraphData, userId]);
 
   // Deletes transaction
   const deleteTransaction = useCallback(
@@ -93,5 +105,5 @@ export const useTransactions = (userId) => {
     if (userId) loadData();
   }, [userId, loadData]);
 
-  return { transactions, summary, isLoading, loadData, deleteTransaction };
+  return { transactions, summary, graphData, isLoading, loadData, deleteTransaction };
 };
