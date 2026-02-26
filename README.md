@@ -38,7 +38,7 @@ cd <repo-name>
    npm install @clerk/clerk-expo, @expo/vector-icons, @react-navigation/bottom-tabs, @react-navigation/elements, @react-navigation/native, eslint-config-expo, expo, expo-blur, expo-constants, expo-font, expo-haptics, expo-image, expo-linear-gradient, expo-linking, expo-router, expo-secure-store, expo-splash-screen, expo-status-bar, expo-symbols, expo-system-ui, expo-web-browser, react, react-dom, react-native, react-native-gesture-handler, react-native-gifted-charts, react-native-keyboard-aware-scroll-view, react-native-reanimated, react-native-safe-area-context, react-native-screens, react-native-svg, react-native-web, react-native-webview, typescript
    ```
 
-2. Start the app
+ ### Start the app
 
    ```bash
    npx expo start
